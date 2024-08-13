@@ -68,4 +68,32 @@ export class AuthController {
       return { message: '구글 로그인 실패', error: error.message };
     }
   }
+
+  @Get('github/login')
+  async githubLogin(@Res() res: Response) {
+    const clientId = this.configService.get('GITHUB_CLIENT_ID');
+    const redirectUri = encodeURIComponent(
+      this.configService.get('GITHUB_REDIRECT_URI'),
+    );
+    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=user:email`;
+    res.redirect(githubAuthUrl);
+  }
+
+  @Get('github')
+  async githubCallback(@Query('code') code: string) {
+    try {
+      const tokenData = await this.authService.getGithubToken(code);
+      const userInfo = await this.authService.getGithubUserInfo(
+        tokenData.access_token,
+      );
+
+      return {
+        message: '깃허브 로그인 성공',
+        user: userInfo,
+      };
+    } catch (error) {
+      console.error('Github login error:', error);
+      return { message: '깃허브 로그인 실패', error: error.message };
+    }
+  }
 }

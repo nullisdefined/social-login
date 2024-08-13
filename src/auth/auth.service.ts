@@ -89,4 +89,46 @@ export class AuthService {
       throw error;
     }
   }
+
+  async getGithubToken(code: string) {
+    const tokenUrl = 'https://github.com/login/oauth/access_token';
+    const params = new URLSearchParams({
+      client_id: this.configService.get('GITHUB_CLIENT_ID'),
+      client_secret: this.configService.get('GITHUB_CLIENT_SECRET'),
+      code,
+      redirect_uri: this.configService.get('GITHUB_REDIRECT_URI'),
+    });
+
+    try {
+      const { data } = await firstValueFrom(
+        this.httpService.post(tokenUrl, params, {
+          headers: {
+            Accept: 'application/json',
+          },
+        }),
+      );
+      return data;
+    } catch (error) {
+      console.error('깃허브 토큰을 가져오는 데 실패했습니다.', error);
+      throw error;
+    }
+  }
+
+  async getGithubUserInfo(accessToken: string) {
+    const userInfoUrl = 'https://api.github.com/user';
+    try {
+      const { data } = await firstValueFrom(
+        this.httpService.get(userInfoUrl, {
+          headers: {
+            Authorization: `token ${accessToken}`,
+            Accept: 'application/vnd.github.v3+json',
+          },
+        }),
+      );
+      return data;
+    } catch (error) {
+      console.error('깃허브 사용자 정보를 가져오는 데 실패했습니다.', error);
+      throw error;
+    }
+  }
 }
