@@ -49,4 +49,44 @@ export class AuthService {
       throw error;
     }
   }
+
+  async getGoogleToken(code: string) {
+    const tokenUrl = 'https://oauth2.googleapis.com/token';
+    const params = new URLSearchParams({
+      code,
+      client_id: this.configService.get('GOOGLE_CLIENT_ID'),
+      client_secret: this.configService.get('GOOGLE_CLIENT_SECRET'),
+      redirect_uri: this.configService.get('GOOGLE_REDIRECT_URI'),
+      grant_type: 'authorization_code',
+    });
+
+    try {
+      const { data } = await firstValueFrom(
+        this.httpService.post(tokenUrl, params.toString(), {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        }),
+      );
+      return data;
+    } catch (error) {
+      console.error('구글 토큰을 가져오는 데 실패했습니다.', error);
+      throw error;
+    }
+  }
+
+  async getGoogleUserInfo(accessToken: string) {
+    const userInfoUrl = 'https://www.googleapis.com/oauth2/v2/userinfo';
+    try {
+      const { data } = await firstValueFrom(
+        this.httpService.get(userInfoUrl, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }),
+      );
+      return data;
+    } catch (error) {
+      console.error('구글 사용자 정보를 가져오는 데 실패했습니다.', error);
+      throw error;
+    }
+  }
 }
